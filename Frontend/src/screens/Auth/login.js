@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import axios from "axios";
 
-const API_URL = "http://your-ip-address:5000/api/auth"; // Replace with your computer's IP
+const API_URL = "http://10.224.15.132:5000/api/auth"; // Replace with your computer's IP
 
 export default function LoginScreen({ navigation }) {
   const [identifier, setIdentifier] = useState("");
