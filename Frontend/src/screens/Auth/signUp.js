@@ -12,8 +12,6 @@ import {
 } from "react-native";
 import axios from "axios";
 
-const API_URL = "http://10.224.15.132:5000/api/auth"; // Replace with your computer's IP
-
 export default function SignUpScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -44,11 +42,14 @@ export default function SignUpScreen({ navigation }) {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API_URL}/signup`, {
-        username,
-        email,
-        password,
-      });
+      const response = await axios.post(
+        `${process.env.EXPO_PUBLIC_API_URL}/signup`,
+        {
+          username,
+          email,
+          password,
+        }
+      );
 
       if (response.data.success) {
         setSuccess(true);
