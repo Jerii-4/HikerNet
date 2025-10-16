@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import axios from "axios";
+import SocialButton from "../../components/SocialButton";
 
 // Replace with your computer's IP
 
@@ -19,6 +20,8 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const GoogleLogo = require("../../assets/icons/google.png");
+  const AppleLogo = require("../../assets/icons/apple.png");
 
   const handleLogin = async () => {
     setError("");
@@ -97,6 +100,22 @@ export default function LoginScreen({ navigation }) {
                 <Text style={styles.loginButtonText}>Login</Text>
               )}
             </TouchableOpacity>
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <SocialButton
+              logo={GoogleLogo}
+              text="Continue with Google"
+              onPress={() => console.log("Google Login Pressed")}
+            />
+            <SocialButton
+              logo={AppleLogo}
+              text="Continue with Apple"
+              onPress={() => console.log("Apple Login Pressed")}
+            />
 
             <View style={styles.signupContainer}>
               <Text style={styles.signupText}>New to HikerNet? </Text>
@@ -187,5 +206,20 @@ const styles = StyleSheet.create({
     color: "#4CAF50",
     fontSize: 15,
     fontWeight: "600",
+  },
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20, // A little less space than the signup link
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#2a2a2a", // Same color as your input border
+  },
+  dividerText: {
+    color: "#999",
+    marginHorizontal: 15,
+    fontSize: 14,
   },
 });

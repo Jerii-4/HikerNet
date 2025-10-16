@@ -12,6 +12,8 @@ import {
 } from "react-native";
 import axios from "axios";
 
+import SocialButton from "../../components/SocialButton";
+
 export default function SignUpScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -20,6 +22,8 @@ export default function SignUpScreen({ navigation }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const GoogleLogo = require("../../assets/icons/google.png");
+  const AppleLogo = require("../../assets/icons/apple.png");
 
   const handleSignUp = async () => {
     setError("");
@@ -159,6 +163,22 @@ export default function SignUpScreen({ navigation }) {
                 <Text style={styles.signupButtonText}>Sign Up</Text>
               )}
             </TouchableOpacity>
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <SocialButton
+              logo={GoogleLogo}
+              text="Continue with Google"
+              onPress={() => console.log("Google Login Pressed")}
+            />
+            <SocialButton
+              logo={AppleLogo}
+              text="Continue with Apple"
+              onPress={() => console.log("Apple Login Pressed")}
+            />
           </View>
         </View>
       </ScrollView>
@@ -280,5 +300,20 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "600",
+  },
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20, // A little less space than the signup link
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#2a2a2a", // Same color as your input border
+  },
+  dividerText: {
+    color: "#999",
+    marginHorizontal: 15,
+    fontSize: 14,
   },
 });
