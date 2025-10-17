@@ -10,41 +10,36 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import axios from "axios";
+import { useRouter } from "expo-router";
+import { useAuth } from "../_layout"; // Use our central auth hook
+import apiClient from "../../api/apiClient";
 import SocialButton from "../../components/SocialButton";
 
-// Replace with your computer's IP
+const googleLogo = require("../../assets/icons/google.png");
+const appleLogo = require("../../assets/icons/apple.png");
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const GoogleLogo = require("../../assets/icons/google.png");
-  const AppleLogo = require("../../assets/icons/apple.png");
+  const router = useRouter();
+  const { login, googleLogin } = useAuth();
 
-  const handleLogin = async () => {
+  const handleEmailLogin = async () => {
     setError("");
-
     if (!identifier || !password) {
       setError("Please fill in all fields");
       return;
     }
-
     setLoading(true);
-
     try {
-      const response = await axios.post(
-        `${process.env.EXPO_PUBLIC_API_URL}/login`,
-        {
-          identifier,
-          password,
-        }
-      );
-
-      if (response.data.success) {
-        // Navigate to Home
-        navigation.replace("Home", { user: response.data.user });
+      const response = await apiClient.post("/login", { identifier, password });
+      if (response.data.token) {
+        login(response.data.token);
+      } else {
+        setError(response.data.message || "Invalid credentials");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Invalid credentials");
@@ -65,7 +60,6 @@ export default function LoginScreen({ navigation }) {
         <View style={styles.content}>
           <Text style={styles.logo}>HikerNet</Text>
           <Text style={styles.subtitle}>Welcome back</Text>
-
           <View style={styles.form}>
             <TextInput
               style={styles.input}
@@ -74,24 +68,29 @@ export default function LoginScreen({ navigation }) {
               value={identifier}
               onChangeText={setIdentifier}
               autoCapitalize="none"
-              autoCorrect={false}
             />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#999"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-            />
-
+            <View style={styles.passwordRow}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="Password"
+                placeholderTextColor="#999"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword((s) => !s)}
+                style={styles.showPasswordBtn}
+              >
+                <Text style={{ color: "#4CAF50", fontWeight: "700" }}>
+                  {showPassword ? "Hide" : "Show"}
+                </Text>
+              </TouchableOpacity>
+            </View>
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
             <TouchableOpacity
               style={styles.loginButton}
-              onPress={handleLogin}
+              onPress={handleEmailLogin}
               disabled={loading}
             >
               {loading ? (
@@ -105,21 +104,19 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.dividerText}>OR</Text>
               <View style={styles.dividerLine} />
             </View>
-
             <SocialButton
-              logo={GoogleLogo}
-              text="Continue with Google"
-              onPress={() => console.log("Google Login Pressed")}
-            />
-            <SocialButton
-              logo={AppleLogo}
+              logo={appleLogo}
               text="Continue with Apple"
-              onPress={() => console.log("Apple Login Pressed")}
+              onPress={() => {}}
             />
-
+            <SocialButton
+              logo={googleLogo}
+              text="Continue with Google"
+              onPress={() => googleLogin()}
+            />
             <View style={styles.signupContainer}>
               <Text style={styles.signupText}>New to HikerNet? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
+              <TouchableOpacity onPress={() => router.push("/(Auth)/signUp")}>
                 <Text style={styles.signupLink}>Join now</Text>
               </TouchableOpacity>
             </View>
@@ -131,18 +128,9 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0a0a0a",
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 30,
-  },
+  container: { flex: 1, backgroundColor: "#0a0a0a" },
+  scrollContent: { flexGrow: 1, justifyContent: "center" },
+  content: { paddingHorizontal: 30 },
   logo: {
     fontSize: 48,
     fontWeight: "bold",
@@ -157,9 +145,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 50,
   },
-  form: {
-    width: "100%",
-  },
+  form: { width: "100%" },
   input: {
     backgroundColor: "#1a1a1a",
     borderRadius: 12,
@@ -182,44 +168,22 @@ const styles = StyleSheet.create({
     padding: 18,
     alignItems: "center",
     marginTop: 10,
-    shadowColor: "#4CAF50",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
   },
-  loginButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
-  },
+  loginButtonText: { color: "#fff", fontSize: 18, fontWeight: "600" },
   signupContainer: {
     flexDirection: "row",
     justifyContent: "center",
     marginTop: 30,
   },
-  signupText: {
-    color: "#999",
-    fontSize: 15,
-  },
-  signupLink: {
-    color: "#4CAF50",
-    fontSize: 15,
-    fontWeight: "600",
-  },
+  signupText: { color: "#999", fontSize: 15 },
+  signupLink: { color: "#4CAF50", fontSize: 15, fontWeight: "600" },
   dividerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 20, // A little less space than the signup link
+    marginVertical: 20,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#2a2a2a", // Same color as your input border
-  },
-  dividerText: {
-    color: "#999",
-    marginHorizontal: 15,
-    fontSize: 14,
-  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: "#2a2a2a" },
+  dividerText: { color: "#999", marginHorizontal: 15, fontSize: 14 },
+  passwordRow: { flexDirection: "row", alignItems: "center" },
+  showPasswordBtn: { marginLeft: 8, paddingHorizontal: 6 },
 });

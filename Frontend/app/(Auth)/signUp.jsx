@@ -10,53 +10,49 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import axios from "axios";
-
+import { useRouter } from "expo-router";
+import apiClient from "../../api/apiClient";
 import SocialButton from "../../components/SocialButton";
 
-export default function SignUpScreen({ navigation }) {
+const googleLogo = require("../../assets/icons/google.png");
+const appleLogo = require("../../assets/icons/apple.png");
+
+export default function SignUpScreen() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const GoogleLogo = require("../../assets/icons/google.png");
-  const AppleLogo = require("../../assets/icons/apple.png");
+  const router = useRouter();
 
   const handleSignUp = async () => {
     setError("");
-
     if (!username || !email || !password || !confirmPassword) {
       setError("Please fill in all fields");
       return;
     }
-
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
-
     if (password.length < 6) {
       setError("Password must be at least 6 characters");
       return;
     }
-
     setLoading(true);
-
     try {
-      const response = await axios.post(
-        `${process.env.EXPO_PUBLIC_API_URL}/signup`,
-        {
-          username,
-          email,
-          password,
-        }
-      );
-
+      const response = await apiClient.post("/signup", {
+        username,
+        email,
+        password,
+      });
       if (response.data.success) {
         setSuccess(true);
+      } else {
+        setError(response.data.message || "Something went wrong");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
@@ -70,18 +66,11 @@ export default function SignUpScreen({ navigation }) {
       <View style={styles.container}>
         <View style={styles.successContainer}>
           <Text style={styles.successTitle}>You've joined HikerNet</Text>
-          <Text style={styles.successMessage}>
-            Welcome to the community, {username}
-          </Text>
-          <Text style={styles.successSubtext}>
-            Login to continue your journey
-          </Text>
-
           <TouchableOpacity
             style={styles.loginButton}
-            onPress={() => navigation.navigate("Login")}
+            onPress={() => router.replace("/(Auth)/login")}
           >
-            <Text style={styles.loginButtonText}>Login</Text>
+            <Text style={styles.loginButtonText}>Login to Continue</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -98,16 +87,16 @@ export default function SignUpScreen({ navigation }) {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-
+          <View style={styles.headerRow}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Text style={styles.backButtonText}>← Back</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.logo}>Join HikerNet</Text>
           <Text style={styles.subtitle}>Start your adventure</Text>
-
           <View style={styles.form}>
             <TextInput
               style={styles.input}
@@ -116,9 +105,7 @@ export default function SignUpScreen({ navigation }) {
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
-              autoCorrect={false}
             />
-
             <TextInput
               style={styles.input}
               placeholder="Email"
@@ -127,31 +114,34 @@ export default function SignUpScreen({ navigation }) {
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
-              autoCorrect={false}
             />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#999"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-            />
-
+            <View style={styles.passwordRow}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="Password"
+                placeholderTextColor="#999"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword((s) => !s)}
+                style={styles.showPasswordBtn}
+              >
+                <Text style={{ color: "#4CAF50", fontWeight: "700" }}>
+                  {showPassword ? "Hide" : "Show"}
+                </Text>
+              </TouchableOpacity>
+            </View>
             <TextInput
               style={styles.input}
               placeholder="Confirm Password"
               placeholderTextColor="#999"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
-              secureTextEntry
-              autoCapitalize="none"
+              secureTextEntry={!showPassword}
             />
-
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
             <TouchableOpacity
               style={styles.signupButton}
               onPress={handleSignUp}
@@ -168,17 +158,22 @@ export default function SignUpScreen({ navigation }) {
               <Text style={styles.dividerText}>OR</Text>
               <View style={styles.dividerLine} />
             </View>
-
             <SocialButton
-              logo={GoogleLogo}
-              text="Continue with Google"
-              onPress={() => console.log("Google Login Pressed")}
+              logo={appleLogo}
+              text="Sign up with Apple"
+              onPress={() => {}}
             />
             <SocialButton
-              logo={AppleLogo}
-              text="Continue with Apple"
-              onPress={() => console.log("Apple Login Pressed")}
+              logo={googleLogo}
+              text="Sign up with Google"
+              onPress={() => {}}
             />
+            <View style={styles.signupContainer}>
+              <Text style={styles.signupText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => router.replace("/(Auth)/login")}>
+                <Text style={styles.signupLink}>Login</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -187,29 +182,11 @@ export default function SignUpScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0a0a0a",
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 30,
-    paddingTop: 60,
-  },
-  backButton: {
-    position: "absolute",
-    top: 60,
-    left: 20,
-    zIndex: 10,
-  },
-  backButtonText: {
-    color: "#4CAF50",
-    fontSize: 16,
-  },
+  container: { flex: 1, backgroundColor: "#0a0a0a" },
+  scrollContent: { flexGrow: 1, justifyContent: "center" },
+  content: { paddingTop: 60, paddingBottom: 30, paddingHorizontal: 30 },
+  backButton: { position: "absolute", top: 60, left: 20, zIndex: 10 },
+  backButtonText: { color: "#4CAF50", fontSize: 16 },
   logo: {
     fontSize: 42,
     fontWeight: "bold",
@@ -224,9 +201,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 40,
   },
-  form: {
-    width: "100%",
-  },
+  form: { width: "100%" },
   input: {
     backgroundColor: "#1a1a1a",
     borderRadius: 12,
@@ -249,17 +224,8 @@ const styles = StyleSheet.create({
     padding: 18,
     alignItems: "center",
     marginTop: 10,
-    shadowColor: "#4CAF50",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
   },
-  signupButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
-  },
+  signupButtonText: { color: "#fff", fontSize: 18, fontWeight: "600" },
   successContainer: {
     flex: 1,
     justifyContent: "center",
@@ -273,47 +239,28 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
-  successMessage: {
-    fontSize: 20,
-    color: "#fff",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  successSubtext: {
-    fontSize: 16,
-    color: "#999",
-    marginBottom: 50,
-    textAlign: "center",
-  },
   loginButton: {
     backgroundColor: "#4CAF50",
     borderRadius: 12,
     paddingVertical: 18,
     paddingHorizontal: 60,
-    shadowColor: "#4CAF50",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
   },
-  loginButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
-  },
+  loginButtonText: { color: "#fff", fontSize: 18, fontWeight: "600" },
   dividerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 20, // A little less space than the signup link
+    marginVertical: 20,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#2a2a2a", // Same color as your input border
+  dividerLine: { flex: 1, height: 1, backgroundColor: "#2a2a2a" },
+  dividerText: { color: "#999", marginHorizontal: 15, fontSize: 14 },
+  signupContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 30,
   },
-  dividerText: {
-    color: "#999",
-    marginHorizontal: 15,
-    fontSize: 14,
-  },
+  signupText: { color: "#999", fontSize: 15 },
+  signupLink: { color: "#4CAF50", fontSize: 15, fontWeight: "600" },
+  headerRow: { width: "100%", marginBottom: 8 },
+  passwordRow: { flexDirection: "row", alignItems: "center" },
+  showPasswordBtn: { marginLeft: 8, paddingHorizontal: 6 },
 });
